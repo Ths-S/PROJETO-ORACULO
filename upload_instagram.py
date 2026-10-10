@@ -53,7 +53,7 @@ if __name__ == "__main__":
             ]
 
     # --- 3. ESCOLHA UMA ALEATORIAMENTE ---
-    legenda_escolhida = random.choice(opcoes_de_legenda)
+    legenda_escolhida = os.getenv("LEGENDA") or random.choice(opcoes_de_legenda)
     print(f"📝 Legenda selecionada: {legenda_escolhida}")
 
     upload = requests.post(

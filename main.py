@@ -1,5 +1,6 @@
 import os
 import io
+import json
 import subprocess
 import time
 import requests
@@ -35,7 +36,7 @@ def listar_videos(service):
     
     res = service.files().list(
         q=query,
-        fields="files(id,name,mimeType)",
+        fields="files(id,name,mimeType,description)",
         supportsAllDrives=True,
         includeItemsFromAllDrives=True,
         corpora="allDrives",
@@ -124,11 +125,23 @@ def main():
 
     video_url = f"{public_url}/{os.path.basename(video_path)}"
 
+    # Legenda/título do vídeo: o produtor (fabrica-videos) grava um JSON na "descrição" do arquivo no Drive.
+    # Sem descrição, os uploaders continuam sorteando as legendas antigas.
+    textos = {}
+    try:
+        meta = json.loads(video.get("description") or "{}")
+        if meta.get("legenda"):
+            textos = {"LEGENDA": meta["legenda"], "TITULO": meta.get("title", "")[:95]}
+            print(f"📝 Legenda do Drive ({meta.get('formato', '?')}): {meta['title']}")
+    except ValueError:
+        print("⚠️ Descrição do arquivo no Drive não é JSON; usando legenda sorteada.")
+
     # 3. UPLOAD YOUTUBE
     print("▶️ Enviando para o YouTube...")
     try:
         env_yt = os.environ.copy()
-        env_yt["VIDEO_PATH"] = video_path 
+        env_yt["VIDEO_PATH"] = video_path
+        env_yt.update(textos)
         subprocess.check_call(["python", "upload_youtube.py"], env=env_yt)
         yt_success = True
     except:
@@ -139,6 +152,7 @@ def main():
     print("▶️ Enviando para o Instagram...")
     env_ig = os.environ.copy()
     env_ig["VIDEO_URL"] = video_url
+    env_ig.update(textos)
     result_ig = subprocess.run(["python", "upload_instagram.py"], env=env_ig, capture_output=True, text=True)
     print(result_ig.stdout)
 

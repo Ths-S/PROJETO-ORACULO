@@ -108,7 +108,8 @@ def upload_video(file_path, title, description, tags=None, category_id="22", pri
 
 if __name__ == "__main__":
     setup_credentials_files()
-    videos = find_videos()
+    # main.py baixa o vídeo do Drive e passa o caminho em VIDEO_PATH
+    videos = [os.environ["VIDEO_PATH"]] if os.getenv("VIDEO_PATH") else find_videos()
     gancho_data = load_gancho_data()
     metadata = load_metadata()
 
@@ -129,6 +130,11 @@ if __name__ == "__main__":
         else:
             gancho = opcoes # Mantém compatibilidade se não for lista
 
+        if os.getenv("TITULO"):   # legenda vinda do Drive (produtor) tem prioridade
+            gancho_categoria = "drive"
+            gancho = {"title": os.environ["TITULO"], "description": os.getenv("LEGENDA", ""),
+                      "tags": ["promoção", "tecnologia", "achadinhos"]}
+
         # Upload para o YouTube usando a opção sorteada
         response = upload_video(
             file_path=video_path,
@@ -147,7 +153,7 @@ if __name__ == "__main__":
         }
         # ... resto do código (save_metadata e shutil.move)
         save_metadata(metadata)
-        print(f"📁 Metadata atualizado com ID do vídeo ({video_id}) e gancho {gancho_name}.")
+        print(f"📁 Metadata atualizado com ID do vídeo ({video_id}) e gancho {gancho_categoria}.")
 
         # ✅ Mover vídeo para 'posted'
         os.makedirs(POSTED_FOLDER, exist_ok=True)

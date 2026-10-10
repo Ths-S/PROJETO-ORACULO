@@ -1,0 +1,8 @@
+.env
+*.pickle
+token.json
+service_account.json
+client_secret*.json
+tokens/
+__pycache__/
+*.log
